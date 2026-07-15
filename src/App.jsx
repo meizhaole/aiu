@@ -1,6 +1,27 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 
+function useInView() {
+  const ref = useRef(null)
+  const [seen, setSeen] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || seen) return
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setSeen(true)
+          io.disconnect()
+        }
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -10% 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [seen])
+  return [ref, seen]
+}
+
 const CLUBS = [
   { id: 'LIT', name: '文学社', en: 'LITERATURE', tag: '书写时代' },
   { id: 'PHO', name: '摄影协会', en: 'PHOTOGRAPHY', tag: '光影捕手' },
@@ -311,7 +332,12 @@ export default function App() {
               </button>
               <button type="submit" className="btn btn-primary" disabled={submitting}>
                 {submitting ? (
-                  <span>SAVING<span className="dots">…</span></span>
+                  <span>
+                    SAVING
+                    <span className="dots">
+                      <i>.</i><i>.</i><i>.</i>
+                    </span>
+                  </span>
                 ) : (
                   <span>SUBMIT <span className="enter">[↵]</span></span>
                 )}
@@ -337,29 +363,29 @@ function Hero({ filled, total }) {
   return (
     <section className="hero">
       <div className="hero-top">
-        <span className="tag">▌ BULLETIN / 招新公告</span>
-        <span className="tag">№ 24–AUTUMN</span>
-        <span className="tag">STATUS: <i className="live">OPEN</i></span>
+        <span className="tag" style={{ animationDelay: '0ms' }}>▌ BULLETIN / 招新公告</span>
+        <span className="tag" style={{ animationDelay: '80ms' }}>№ 24–AUTUMN</span>
+        <span className="tag" style={{ animationDelay: '160ms' }}>STATUS: <i className="live">OPEN</i></span>
       </div>
       <h1 className="hero-title">
-        <span>JOIN</span>
-        <span>THE <i className="hl">CLUB</i>.</span>
-        <span className="hero-zh">找到 <em>属于你</em> 的那群人</span>
+        <span className="line">JOIN</span>
+        <span className="line">THE <i className="hl">CLUB</i>.</span>
+        <span className="line hero-zh">找到 <em>属于你</em> 的那群人</span>
       </h1>
       <div className="hero-meta">
-        <div>
+        <div style={{ animationDelay: '420ms' }}>
           <span className="k">10</span>
           <span className="v">CLUBS</span>
         </div>
-        <div>
+        <div style={{ animationDelay: '500ms' }}>
           <span className="k">2</span>
           <span className="v">CHOICES</span>
         </div>
-        <div>
+        <div style={{ animationDelay: '580ms' }}>
           <span className="k">3′</span>
           <span className="v">TO FINISH</span>
         </div>
-        <div>
+        <div style={{ animationDelay: '660ms' }}>
           <span className="k">{String(filled).padStart(2, '0')}/{String(total).padStart(2, '0')}</span>
           <span className="v">FILLED</span>
         </div>
@@ -389,8 +415,9 @@ function TopBar({ now, count }) {
 
 /* ---------- Section ---------- */
 function Section({ no, title, children }) {
+  const [ref, seen] = useInView()
   return (
-    <section className="section">
+    <section className={`section ${seen ? 'is-in' : ''}`} ref={ref}>
       <header className="section-head">
         <span className="section-no">[{no}]</span>
         <h3 className="section-title">{title}</h3>
