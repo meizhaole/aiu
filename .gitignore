@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Claude / agent configs
+CLAUDE.md
+AGENTS.md
