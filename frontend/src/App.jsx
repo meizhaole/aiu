@@ -1,565 +1,401 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import './App.css'
 
-function useInView() {
-  const ref = useRef(null)
-  const [seen, setSeen] = useState(false)
-  useEffect(() => {
-    const el = ref.current
-    if (!el || seen) return
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setSeen(true)
-          io.disconnect()
-        }
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -10% 0px' },
-    )
-    io.observe(el)
-    return () => io.disconnect()
-  }, [seen])
-  return [ref, seen]
-}
-
-const CLUBS = [
-  { id: 'LIT', name: '文学社', en: 'LITERATURE', tag: '书写时代' },
-  { id: 'PHO', name: '摄影协会', en: 'PHOTOGRAPHY', tag: '光影捕手' },
-  { id: 'MUS', name: '音乐社', en: 'MUSIC', tag: '频率共振' },
-  { id: 'DAN', name: '街舞社', en: 'STREET DANCE', tag: '身体即语言' },
-  { id: 'COD', name: '编程俱乐部', en: 'CODE', tag: 'bit 之声' },
-  { id: 'DEB', name: '辩论队', en: 'DEBATE', tag: '理性与锋芒' },
-  { id: 'BSK', name: '篮球社', en: 'BASKETBALL', tag: '第 4 节反超' },
-  { id: 'VOL', name: '志愿者协会', en: 'VOLUNTEER', tag: '到现场去' },
-  { id: 'DRA', name: '戏剧社', en: 'DRAMA', tag: '第四面墙' },
-  { id: 'ANI', name: '动漫社', en: 'ANIMATION', tag: '二三次元通行' },
-]
-
-const FIELDS = [
-  { key: 'name', label: 'NAME / 姓名' },
-  { key: 'studentId', label: 'STUDENT ID / 学号' },
-  { key: 'college', label: 'COLLEGE / 学院' },
-  { key: 'className', label: 'CLASS / 班级' },
-  { key: 'phone', label: 'PHONE / 手机' },
-  { key: 'email', label: 'EMAIL / 邮箱' },
-  { key: 'club1', label: 'CHOICE 01 / 第一志愿' },
-  { key: 'club2', label: 'CHOICE 02 / 第二志愿' },
-]
-
-const INITIAL = {
+const INITIAL_FORM = {
   name: '',
-  studentId: '',
   college: '',
-  className: '',
-  gender: '男',
+  gradeMajorClass: '',
   phone: '',
-  email: '',
-  club1: '',
-  club2: '',
-  skills: '',
-  bio: '',
-  willing: true,
+  firstChoiceDepartment: '',
+  secondChoiceDepartment: '',
+  isOpenToAdjustment: false,
+  hobbiesOrSpecialties: '',
+  reasonToJoin: '',
+  selfIntroduction: '',
+  hasTechExperience: false,
+  techExperienceDetails: '',
 }
 
-function validate(v) {
-  const e = {}
-  if (!v.name.trim()) e.name = 'REQUIRED'
-  if (!/^\d{6,12}$/.test(v.studentId.trim())) e.studentId = 'EXPECT 6–12 DIGITS'
-  if (!v.college.trim()) e.college = 'REQUIRED'
-  if (!v.className.trim()) e.className = 'REQUIRED'
-  if (!/^1[3-9]\d{9}$/.test(v.phone.trim())) e.phone = 'INVALID PHONE'
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.email.trim())) e.email = 'INVALID EMAIL'
-  if (!v.club1) e.club1 = 'PICK ONE'
-  if (v.club2 && v.club2 === v.club1) e.club2 = 'SAME AS CHOICE 01'
-  return e
+const DEPARTMENT_OPTIONS = ['组织部', '宣传部', '技术部', '外联部', '文艺部', '其他']
+
+function validate(form) {
+  const nextErrors = {}
+
+  if (!form.name.trim()) nextErrors.name = '请填写姓名'
+  if (!form.college.trim()) nextErrors.college = '请填写学院'
+  if (!form.gradeMajorClass.trim()) nextErrors.gradeMajorClass = '请填写年级/专业/班级'
+  if (!/^1[3-9]\d{9}$/.test(form.phone.trim())) nextErrors.phone = '请输入正确的中国大陆手机号'
+  if (!form.firstChoiceDepartment.trim()) nextErrors.firstChoiceDepartment = '请填写第一志愿部门'
+  if (form.hasTechExperience && !form.techExperienceDetails.trim()) {
+    nextErrors.techExperienceDetails = '请补充科创经历详情'
+  }
+
+  return nextErrors
 }
 
-function pad(n) {
-  return String(n).padStart(2, '0')
+function Field({ label, required, error, children, hint }) {
+  return (
+    <label className={`field ${error ? 'has-error' : ''}`}>
+      <div className="field-label">
+        <span>
+          {label}
+          {required ? <b className="required">*</b> : null}
+        </span>
+        {hint ? <span className="field-hint">{hint}</span> : null}
+      </div>
+      {children}
+      {error ? <div className="field-error">{error}</div> : null}
+    </label>
+  )
 }
 
-function clock() {
-  const d = new Date()
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+function TextArea({ value, onChange, placeholder, rows = 4, maxLength }) {
+  return (
+    <textarea
+      className="textarea"
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+      rows={rows}
+      maxLength={maxLength}
+    />
+  )
+}
+
+function TextInput({ value, onChange, placeholder, type = 'text', inputMode }) {
+  return (
+    <input
+      className="input"
+      type={type}
+      inputMode={inputMode}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      placeholder={placeholder}
+    />
+  )
 }
 
 export default function App() {
-  const [form, setForm] = useState(INITIAL)
+  const [form, setForm] = useState(INITIAL_FORM)
   const [errors, setErrors] = useState({})
-  const [submitting, setSubmitting] = useState(false)
-  const [done, setDone] = useState(null)
-  const [now, setNow] = useState(clock())
-  const [count, setCount] = useState(() =>
-    JSON.parse(localStorage.getItem('aiu.signups') || '[]').length,
-  )
-  const formRef = useRef(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitResult, setSubmitResult] = useState(null)
+  const [submitError, setSubmitError] = useState('')
 
-  useEffect(() => {
-    const t = setInterval(() => setNow(clock()), 1000)
-    return () => clearInterval(t)
-  }, [])
+  const filledCount = useMemo(() => {
+    return [
+      form.name,
+      form.college,
+      form.gradeMajorClass,
+      form.phone,
+      form.firstChoiceDepartment,
+      form.secondChoiceDepartment,
+      form.hobbiesOrSpecialties,
+      form.reasonToJoin,
+      form.selfIntroduction,
+      form.techExperienceDetails,
+      form.isOpenToAdjustment,
+      form.hasTechExperience,
+    ].filter(Boolean).length
+  }, [form])
 
-  const update = (k, val) => {
-    setForm((prev) => ({ ...prev, [k]: val }))
-    setErrors((prev) => (prev[k] ? { ...prev, [k]: undefined } : prev))
+  const updateField = (key, value) => {
+    setForm((current) => ({ ...current, [key]: value }))
+    setErrors((current) => {
+      if (!current[key]) return current
+      const nextErrors = { ...current }
+      delete nextErrors[key]
+      return nextErrors
+    })
+    setSubmitError('')
   }
 
-  const filled = useMemo(
-    () => FIELDS.filter((f) => String(form[f.key]).trim()).length,
-    [form],
-  )
+  const handleReset = () => {
+    setForm(INITIAL_FORM)
+    setErrors({})
+    setSubmitResult(null)
+    setSubmitError('')
+  }
 
-  const onSubmit = async (ev) => {
-    ev.preventDefault()
-    const e = validate(form)
-    setErrors(e)
-    if (Object.keys(e).length > 0) {
-      const firstKey = Object.keys(e)[0]
-      const el = formRef.current?.querySelector(`[name="${firstKey}"]`)
-      el?.focus()
-      el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  const handleSubmit = async (event) => {
+    event.preventDefault()
+
+    const nextErrors = validate(form)
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length > 0) {
       return
     }
-    setSubmitting(true)
-    const record = { ...form, submittedAt: new Date().toISOString(), seq: count + 1 }
+
+    setIsSubmitting(true)
+    setSubmitError('')
+
+    const payload = {
+      name: form.name.trim(),
+      college: form.college.trim(),
+      gradeMajorClass: form.gradeMajorClass.trim(),
+      phone: form.phone.trim(),
+      firstChoiceDepartment: form.firstChoiceDepartment.trim(),
+      secondChoiceDepartment: form.secondChoiceDepartment.trim(),
+      isOpenToAdjustment: form.isOpenToAdjustment,
+      hobbiesOrSpecialties: form.hobbiesOrSpecialties.trim(),
+      reasonToJoin: form.reasonToJoin.trim(),
+      selfIntro: form.selfIntroduction.trim(),
+      hasTechExperience: form.hasTechExperience,
+      experience: form.hasTechExperience ? form.techExperienceDetails.trim() : '',
+    }
+
     try {
-      const list = JSON.parse(localStorage.getItem('aiu.signups') || '[]')
-      list.push(record)
-      localStorage.setItem('aiu.signups', JSON.stringify(list))
-      setCount(list.length)
-      console.log('%c[LOGGED] entry accepted', 'background:#c8ff00;color:#0a0a0a;font-weight:700;padding:2px 6px;', record)
-      await new Promise((r) => setTimeout(r, 900))
-      setDone(record)
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+
+      const result = await response.json().catch(() => null)
+
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || '提交失败，请稍后重试')
+      }
+
+      setSubmitResult(result.data)
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : '提交失败，请稍后重试')
     } finally {
-      setSubmitting(false)
+      setIsSubmitting(false)
     }
   }
 
-  const reset = () => {
-    setForm(INITIAL)
-    setErrors({})
-    setDone(null)
+  if (submitResult) {
+    return (
+      <div className="page">
+        <main className="shell result-shell">
+          <section className="hero-card success-card">
+            <p className="eyebrow">提交成功</p>
+            <h1>你的报名信息已进入审核队列</h1>
+            <p className="hero-copy">
+              系统已成功接收本次报名。请保留下方编号，后续如需核对信息或补充说明时可以直接使用。
+            </p>
+            <div className="result-grid">
+              <div>
+                <span>报名编号</span>
+                <strong>#{String(submitResult.id).padStart(4, '0')}</strong>
+              </div>
+              <div>
+                <span>提交时间</span>
+                <strong>{new Date(submitResult.created_at).toLocaleString('zh-CN')}</strong>
+              </div>
+            </div>
+            <button type="button" className="primary-btn" onClick={handleReset}>
+              继续填写下一份
+            </button>
+          </section>
+        </main>
+      </div>
+    )
   }
-
-  if (done) return <Receipt record={done} onReset={reset} />
 
   return (
     <div className="page">
-      <TopBar now={now} count={count} />
-
-      <Hero filled={filled} total={FIELDS.length} />
-
-      <main className="main" ref={formRef}>
-        <aside className="rail">
-          <div className="rail-head">
-            <span className="dot" /> INDEX
-          </div>
-          <ul className="club-index">
-            {CLUBS.map((c, i) => (
-              <li
-                key={c.id}
-                className={`club-row ${
-                  form.club1 === c.name || form.club2 === c.name ? 'is-picked' : ''
-                }`}
-              >
-                <span className="club-num">{pad(i + 1)}</span>
-                <div className="club-body">
-                  <div className="club-en">{c.en}</div>
-                  <div className="club-zh">{c.name}</div>
-                </div>
-                <span className="club-mark">
-                  {form.club1 === c.name ? '01' : form.club2 === c.name ? '02' : ''}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <div className="rail-foot">
-            <span>※ 共 {CLUBS.length} 个社团</span>
-            <span>志愿不可重复</span>
-          </div>
-        </aside>
-
-        <form className="form" onSubmit={onSubmit} noValidate>
-          <header className="form-head">
-            <h2>
-              <span className="hash">№</span> 报名表
-              <span className="form-head-en">/ APPLICATION FORM</span>
-            </h2>
-            <div className="progress">
-              <span className="progress-num">
-                {String(filled).padStart(2, '0')}/{String(FIELDS.length).padStart(2, '0')}
-              </span>
-              <span className="progress-bar">
-                <i style={{ width: `${(filled / FIELDS.length) * 100}%` }} />
-              </span>
-            </div>
-          </header>
-
-          <Section title="BASIC INFO / 基本信息" no="01">
-            <div className="grid-2">
-              <TextInput
-                no="01" name="name" label="NAME / 姓名" required
-                value={form.name} error={errors.name}
-                onChange={(v) => update('name', v)} placeholder="张小明"
-              />
-              <TextInput
-                no="02" name="studentId" label="STUDENT ID / 学号" required
-                value={form.studentId} error={errors.studentId}
-                onChange={(v) => update('studentId', v)} placeholder="2024010101"
-                inputMode="numeric"
-              />
-              <TextInput
-                no="03" name="college" label="COLLEGE / 学院" required
-                value={form.college} error={errors.college}
-                onChange={(v) => update('college', v)} placeholder="计算机学院"
-              />
-              <TextInput
-                no="04" name="className" label="CLASS / 班级" required
-                value={form.className} error={errors.className}
-                onChange={(v) => update('className', v)} placeholder="计科 2401"
-              />
-              <div className="cell">
-                <Label no="05">GENDER / 性别</Label>
-                <div className="seg">
-                  {['男', '女'].map((g) => (
-                    <button
-                      key={g}
-                      type="button"
-                      className={`seg-item ${form.gender === g ? 'on' : ''}`}
-                      onClick={() => update('gender', g)}
-                    >
-                      [{form.gender === g ? '×' : ' '}] {g}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Section>
-
-          <Section title="CONTACT / 联系方式" no="02">
-            <div className="grid-2">
-              <TextInput
-                no="06" name="phone" label="PHONE / 手机号" required
-                value={form.phone} error={errors.phone}
-                onChange={(v) => update('phone', v)} placeholder="13800000000"
-                inputMode="tel"
-              />
-              <TextInput
-                no="07" name="email" label="EMAIL / 邮箱" required
-                value={form.email} error={errors.email}
-                onChange={(v) => update('email', v)} placeholder="you@edu.cn"
-                type="email"
-              />
-            </div>
-          </Section>
-
-          <Section title="CHOICE / 志愿选择" no="03">
-            <div className="grid-2">
-              <SelectInput
-                no="08" name="club1" label="CHOICE 01 / 第一志愿" required
-                value={form.club1} error={errors.club1}
-                onChange={(v) => {
-                  update('club1', v)
-                  if (form.club2 === v) update('club2', '')
-                }}
-                options={CLUBS}
-                placeholder="— 选择社团 —"
-              />
-              <SelectInput
-                no="09" name="club2" label="CHOICE 02 / 第二志愿"
-                value={form.club2} error={errors.club2}
-                onChange={(v) => update('club2', v)}
-                options={CLUBS.filter((c) => c.name !== form.club1)}
-                placeholder="— 不填报 —"
-                disabled={!form.club1}
-              />
-            </div>
-            <button
-              type="button"
-              className={`switch ${form.willing ? 'on' : ''}`}
-              onClick={() => update('willing', !form.willing)}
-            >
-              <span className="switch-box">
-                {form.willing ? '[×]' : '[ ]'}
-              </span>
-              <span className="switch-text">
-                ACCEPT REASSIGNMENT / 服从调剂
-              </span>
-            </button>
-          </Section>
-
-          <Section title="ABOUT YOU / 更多关于你" no="04">
-            <TextInput
-              no="10" name="skills" label="SKILLS / 特长"
-              value={form.skills}
-              onChange={(v) => update('skills', v)}
-              placeholder="吉他 / PS / 篮球 / Figma …"
-              hint="选填"
-            />
-            <div className="cell textarea-cell">
-              <Label no="11">BIO / 自我介绍 <span className="hint">选填 · 100 字以内</span></Label>
-              <textarea
-                className="text-area"
-                rows={4}
-                maxLength={100}
-                name="bio"
-                placeholder="> 说说你为什么想加入 _"
-                value={form.bio}
-                onChange={(e) => update('bio', e.target.value)}
-              />
-              <div className="counter-line">
-                {form.bio.length}/100 CHAR
-              </div>
-            </div>
-          </Section>
-
-          <div className="submit-row">
-            <p className="notice">
-              ※ 提交即同意 <a href="#/agreement">《报名须知》</a>。
-              本原型仅作演示，数据保存于本机浏览器 localStorage。
-            </p>
-            <div className="actions">
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => {
-                  setForm(INITIAL)
-                  setErrors({})
-                }}
-                disabled={submitting}
-              >
-                [ ESC ] CLEAR
-              </button>
-              <button type="submit" className="btn btn-primary" disabled={submitting}>
-                {submitting ? (
-                  <span>
-                    SAVING
-                    <span className="dots">
-                      <i>.</i><i>.</i><i>.</i>
-                    </span>
-                  </span>
-                ) : (
-                  <span>SUBMIT <span className="enter">[↵]</span></span>
-                )}
-              </button>
-            </div>
-          </div>
-        </form>
-      </main>
-
-      <footer className="bottom-bar">
-        <span>CLUB.RECRUIT // v1.0.0</span>
-        <span className="marquee">
-          ▌ EST. 2026 ▌ 10 CLUBS, 1 FORM ▌ BE THERE OR BE SQUARE ▌ LOG = LOCAL ▌
-        </span>
-        <span>© 校园社团联合会</span>
-      </footer>
-    </div>
-  )
-}
-
-/* ---------- Hero ---------- */
-function Hero({ filled, total }) {
-  return (
-    <section className="hero">
-      <div className="hero-top">
-        <span className="tag" style={{ animationDelay: '0ms' }}>▌ BULLETIN / 招新公告</span>
-        <span className="tag" style={{ animationDelay: '80ms' }}>№ 24–AUTUMN</span>
-        <span className="tag" style={{ animationDelay: '160ms' }}>STATUS: <i className="live">OPEN</i></span>
-      </div>
-      <h1 className="hero-title">
-        <span className="line">JOIN</span>
-        <span className="line">THE <i className="hl">CLUB</i>.</span>
-        <span className="line hero-zh">找到 <em>属于你</em> 的那群人</span>
-      </h1>
-      <div className="hero-meta">
-        <div style={{ animationDelay: '420ms' }}>
-          <span className="k">10</span>
-          <span className="v">CLUBS</span>
-        </div>
-        <div style={{ animationDelay: '500ms' }}>
-          <span className="k">2</span>
-          <span className="v">CHOICES</span>
-        </div>
-        <div style={{ animationDelay: '580ms' }}>
-          <span className="k">3′</span>
-          <span className="v">TO FINISH</span>
-        </div>
-        <div style={{ animationDelay: '660ms' }}>
-          <span className="k">{String(filled).padStart(2, '0')}/{String(total).padStart(2, '0')}</span>
-          <span className="v">FILLED</span>
-        </div>
-      </div>
-      <div className="ascii-divider" aria-hidden>
-        ═════════════════════════════════════════════════════════════════
-      </div>
-    </section>
-  )
-}
-
-function TopBar({ now, count }) {
-  return (
-    <div className="topbar">
-      <div className="topbar-cell">
-        <span className="dot" /> SYSTEM ONLINE
-      </div>
-      <div className="topbar-cell">
-        LOG / 本地登记 <strong>{String(count).padStart(3, '0')}</strong> ENTRIES
-      </div>
-      <div className="topbar-cell clock">
-        {now}
-      </div>
-    </div>
-  )
-}
-
-/* ---------- Section ---------- */
-function Section({ no, title, children }) {
-  const [ref, seen] = useInView()
-  return (
-    <section className={`section ${seen ? 'is-in' : ''}`} ref={ref}>
-      <header className="section-head">
-        <span className="section-no">[{no}]</span>
-        <h3 className="section-title">{title}</h3>
-        <span className="section-line" />
-      </header>
-      <div className="section-body">{children}</div>
-    </section>
-  )
-}
-
-function Label({ no, children }) {
-  return (
-    <span className="label">
-      {no && <span className="label-no">[{no}]→</span>}
-      {children}
-    </span>
-  )
-}
-
-function TextInput({ no, name, label, value, onChange, error, required, placeholder, hint, type = 'text', inputMode }) {
-  return (
-    <label className={`cell ${error ? 'has-err' : ''}`} data-invalid={error ? 'true' : 'false'}>
-      <Label no={no}>
-        {label} {required && <span className="req">*</span>}
-        {hint && <span className="hint"> · {hint}</span>}
-      </Label>
-      <div className="input-wrap">
-        <span className="prompt">&gt;</span>
-        <input
-          name={name}
-          type={type}
-          inputMode={inputMode}
-          className="text-input"
-          value={value}
-          placeholder={placeholder}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      </div>
-      {error && (
-        <span className="err">
-          <span className="err-mark">[!]</span> {error}
-        </span>
-      )}
-    </label>
-  )
-}
-
-function SelectInput({ no, name, label, value, onChange, error, required, options, placeholder, disabled }) {
-  return (
-    <label className={`cell ${error ? 'has-err' : ''}`}>
-      <Label no={no}>
-        {label} {required && <span className="req">*</span>}
-      </Label>
-      <div className="input-wrap select-wrap">
-        <span className="prompt">▸</span>
-        <select
-          name={name}
-          className="select"
-          value={value}
-          disabled={disabled}
-          onChange={(e) => onChange(e.target.value)}
-        >
-          <option value="">{placeholder}</option>
-          {options.map((o) => (
-            <option key={o.id} value={o.name}>
-              {o.name} · {o.en}
-            </option>
-          ))}
-        </select>
-        <span className="select-bracket">▼</span>
-      </div>
-      {error && (
-        <span className="err">
-          <span className="err-mark">[!]</span> {error}
-        </span>
-      )}
-    </label>
-  )
-}
-
-/* ---------- Receipt ---------- */
-function Receipt({ record, onReset }) {
-  const club = CLUBS.find((c) => c.name === record.club1)
-  return (
-    <div className="page receipt-page">
-      <div className="topbar">
-        <div className="topbar-cell"><span className="dot" /> ENTRY ACCEPTED</div>
-        <div className="topbar-cell">SEQ / <strong>#{String(record.seq).padStart(4, '0')}</strong></div>
-        <div className="topbar-cell">{new Date(record.submittedAt).toLocaleString('zh-CN')}</div>
-      </div>
-
-      <main className="receipt">
-        <div className="receipt-flash">
-          <span className="stamp">LOGGED.</span>
-          <span className="stamp-zh">登 记 完 成</span>
-        </div>
-
-        <div className="ticket">
-          <div className="ticket-top">
-            <span>▌ CLUB.RECRUIT</span>
-            <span>№ {String(record.seq).padStart(4, '0')}</span>
-          </div>
-          <h2 className="ticket-title">
-            WELCOME, <i>{record.name.toUpperCase()}</i>.
-          </h2>
-          <p className="ticket-sub">
-            已收到你对 <strong>{club?.name}（{club?.en}）</strong> 的报名申请。
-            <br />
-            结果将于 7 个工作日内通过短信发送至 {record.phone}。
+      <main className="shell">
+        <section className="hero-card">
+          <p className="eyebrow">招新报名表</p>
+          <h1>认真填写，欢迎加入我们</h1>
+          <p className="hero-copy">
+            请按中文字段逐项填写。带星号的是必填项，提交后会直接发送到后台数据库。
           </p>
-
-          <dl className="ticket-grid">
-            <div><dt>STUDENT ID</dt><dd>{record.studentId}</dd></div>
-            <div><dt>COLLEGE/CLASS</dt><dd>{record.college} / {record.className}</dd></div>
-            <div><dt>CHOICE 01</dt><dd>{record.club1}</dd></div>
-            <div><dt>CHOICE 02</dt><dd>{record.club2 || '——'}</dd></div>
-            <div><dt>REASSIGN</dt><dd>{record.willing ? 'YES' : 'NO'}</dd></div>
-            <div><dt>SEQ</dt><dd>#{String(record.seq).padStart(4, '0')}</dd></div>
-          </dl>
-
-          <div className="ticket-perf" aria-hidden>
-            • • • • • • • • • • • • • • • • • • • • • • • • • • • • • • •
+          <div className="hero-note">
+            请尽量使用真实、可联系的信息；如果你有科创经历，也欢迎在对应栏目里写得更具体一些。
           </div>
-
-          <div className="ticket-foot">
-            <span>※ 请妥善保存，作为现场签到凭证</span>
-            <span>SIGNED BY / 校园社团联合会</span>
+          <div className="hero-stats">
+            <div>
+              <span>当前进度</span>
+              <strong>{filledCount}</strong>
+            </div>
+            <div>
+              <span>必填字段</span>
+              <strong>已启用</strong>
+            </div>
+            <div>
+              <span>提交方式</span>
+              <strong>/api/register</strong>
+            </div>
           </div>
-        </div>
+        </section>
 
-        <div className="receipt-actions">
-          <a
-            className="btn btn-ghost"
-            href={`data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(record, null, 2))}`}
-            download={`signup-${record.studentId}.json`}
-          >
-            [ ↓ ] EXPORT .JSON
-          </a>
-          <button type="button" className="btn btn-primary" onClick={onReset}>
-            AGAIN [↻]
-          </button>
-        </div>
+        <section className="form-card">
+          <form className="form" onSubmit={handleSubmit} noValidate>
+            <div className="form-banner">
+              本页为正式报名表，请确认信息准确后再提交。标记为“可选”的内容可按需填写。
+            </div>
+
+            <div className="section-title">
+              <h2>基本信息</h2>
+              <p>用于识别报名者身份与后续联系。</p>
+            </div>
+
+            <div className="grid-2">
+              <Field label="姓名" required error={errors.name}>
+                <TextInput
+                  value={form.name}
+                  onChange={(value) => updateField('name', value)}
+                  placeholder="请输入姓名"
+                />
+              </Field>
+
+              <Field label="学院" required error={errors.college}>
+                <TextInput
+                  value={form.college}
+                  onChange={(value) => updateField('college', value)}
+                  placeholder="例如：计算机学院"
+                />
+              </Field>
+
+              <Field label="年级 / 专业 / 班级" required error={errors.gradeMajorClass}>
+                <TextInput
+                  value={form.gradeMajorClass}
+                  onChange={(value) => updateField('gradeMajorClass', value)}
+                  placeholder="例如：2024级 软件工程 1班"
+                />
+              </Field>
+
+              <Field label="手机号" required error={errors.phone}>
+                <TextInput
+                  value={form.phone}
+                  onChange={(value) => updateField('phone', value)}
+                  placeholder="请输入中国大陆手机号"
+                  inputMode="tel"
+                />
+              </Field>
+            </div>
+
+            <div className="section-title">
+              <h2>部门志愿</h2>
+              <p>请根据你的意向选择第一志愿，第二志愿可选。</p>
+            </div>
+
+            <div className="grid-2">
+              <Field label="第一志愿部门" required error={errors.firstChoiceDepartment}>
+                <select
+                  className="input select"
+                  value={form.firstChoiceDepartment}
+                  onChange={(event) => updateField('firstChoiceDepartment', event.target.value)}
+                >
+                  <option value="">请选择部门</option>
+                  {DEPARTMENT_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+
+              <Field label="第二志愿部门" hint="可选">
+                <select
+                  className="input select"
+                  value={form.secondChoiceDepartment}
+                  onChange={(event) => updateField('secondChoiceDepartment', event.target.value)}
+                >
+                  <option value="">不填写</option>
+                  {DEPARTMENT_OPTIONS.filter((option) => option !== form.firstChoiceDepartment).map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+
+            <div className="check-group">
+              <label className="check-item">
+                <input
+                  type="checkbox"
+                  checked={form.isOpenToAdjustment}
+                  onChange={(event) => updateField('isOpenToAdjustment', event.target.checked)}
+                />
+                <span>是否服从调剂</span>
+              </label>
+
+              <label className="check-item">
+                <input
+                  type="checkbox"
+                  checked={form.hasTechExperience}
+                  onChange={(event) => {
+                    const checked = event.target.checked
+                    updateField('hasTechExperience', checked)
+                    if (!checked) {
+                      updateField('techExperienceDetails', '')
+                    }
+                  }}
+                />
+                <span>是否有科创经历</span>
+              </label>
+            </div>
+
+            <div className="section-title">
+              <h2>个人补充</h2>
+              <p>这些内容将帮助我们更全面地了解你。</p>
+            </div>
+
+            <div className="stack">
+              <Field label="特长 / 爱好" hint="可选">
+                <TextArea
+                  value={form.hobbiesOrSpecialties}
+                  onChange={(value) => updateField('hobbiesOrSpecialties', value)}
+                  placeholder="例如：摄影、剪辑、吉他、写作等"
+                  rows={3}
+                  maxLength={300}
+                />
+              </Field>
+
+              <Field label="加入原因" hint="可选">
+                <TextArea
+                  value={form.reasonToJoin}
+                  onChange={(value) => updateField('reasonToJoin', value)}
+                  placeholder="为什么想加入我们？"
+                  rows={4}
+                  maxLength={500}
+                />
+              </Field>
+
+              <Field label="自我介绍" hint="可选">
+                <TextArea
+                  value={form.selfIntroduction}
+                  onChange={(value) => updateField('selfIntroduction', value)}
+                  placeholder="简单介绍一下自己"
+                  rows={4}
+                  maxLength={500}
+                />
+              </Field>
+
+              <Field
+                label="科创经历详情"
+                hint={form.hasTechExperience ? '请填写' : '勾选“是否有科创经历”后填写'}
+                error={errors.techExperienceDetails}
+              >
+                <TextArea
+                  value={form.techExperienceDetails}
+                  onChange={(value) => updateField('techExperienceDetails', value)}
+                  placeholder="例如：参加过哪些比赛、项目、训练营，担任什么角色"
+                  rows={5}
+                  maxLength={800}
+                />
+              </Field>
+            </div>
+
+            {submitError ? <div className="submit-error">{submitError}</div> : null}
+
+            <div className="actions">
+              <button type="button" className="secondary-btn" onClick={handleReset} disabled={isSubmitting}>
+                重置
+              </button>
+              <button type="submit" className="primary-btn" disabled={isSubmitting}>
+                {isSubmitting ? '提交中...' : '提交报名'}
+              </button>
+            </div>
+          </form>
+        </section>
       </main>
     </div>
   )
