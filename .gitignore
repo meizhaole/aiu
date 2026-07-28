@@ -26,3 +26,12 @@ dist-ssr
 # Claude / agent configs
 CLAUDE.md
 AGENTS.md
+
+# ===== 新增以下内容 =====
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Vercel
+.vercel
