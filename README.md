@@ -36,7 +36,7 @@ AIU 报名网站
 | 技术 | 说明 |
 | --- | --- |
 | Vercel Serverless Functions | 后端 API 入口位于 `api/register.js` |
-| Node.js Runtime | 运行时配置为 `nodejs18.x` |
+| Node.js Runtime | 使用 Vercel 默认 Node.js 运行时，无需在 `vercel.json` 中显式声明版本 |
 | 语法 | ES Module，使用 `import/export` |
 
 ### 数据库
@@ -60,7 +60,7 @@ AIU 报名网站
 | --- | --- |
 | `api/register.js` | Vercel Serverless Function 入口，处理报名表单的 `POST /api/register` 请求 |
 | `frontend/` | 前端源码目录，使用 Vite + React 构建报名页面 |
-| `vercel.json` | Vercel 部署配置，定义构建命令、输出目录、函数运行时和路由重写规则 |
+| `vercel.json` | Vercel 部署配置，定义构建命令、输出目录、静态路由重写规则 |
 | `package.json` | 根目录依赖配置，当前包含后端所需的 `@neondatabase/serverless` |
 | `.env` | 本地与部署环境变量文件，不应提交到仓库 |
 | `.gitignore` | 忽略规则，已排除 `.env`、`node_modules`、`dist`、`.vercel` 等敏感或构建产物 |
@@ -77,7 +77,7 @@ AIU 报名网站
 
 #### 根目录
 
-根目录保存部署配置、环境变量说明和后端依赖，不放前端源码。
+根目录保存部署配置、环境变量说明和后端依赖，不放前端源码。Vercel 控制台里的 Root Directory 也应保持为仓库根目录 `aiu`，不要改成 `frontend` 或 `api`。
 
 ## 4. 数据库设计
 
@@ -324,6 +324,10 @@ vercel dev
 
 在 Vercel 控制台导入当前 Git 仓库 `meizhaole/aiu`。
 
+#### 1.1 检查 Root Directory
+
+Root Directory 需要指向仓库根目录，也就是 `aiu`。如果把它改成 `frontend`，Vercel 就会读不到根目录的 `vercel.json`，从而导致 `/register` 这类 SPA 路由出现 404。
+
 #### 2. 设置环境变量
 
 在项目设置中添加：
@@ -336,13 +340,9 @@ Vercel 会读取根目录的 `vercel.json`，执行以下配置：
 
 ```json
 {
+	"$schema": "https://openapi.vercel.sh/vercel.json",
 	"buildCommand": "cd frontend && npm install && npm run build",
 	"outputDirectory": "frontend/dist",
-	"functions": {
-		"api/*.js": {
-			"runtime": "nodejs18.x"
-		}
-	},
 	"rewrites": [
 		{
 			"source": "/((?!api/.*|.*\\..*).*)",
@@ -358,7 +358,7 @@ Vercel 会读取根目录的 `vercel.json`，执行以下配置：
 | --- | --- |
 | `buildCommand` | 构建前端：进入 `frontend/` 后安装依赖并执行 `npm run build` |
 | `outputDirectory` | 指定前端构建产物目录为 `frontend/dist` |
-| `functions.api/*.js.runtime` | 让 `api/` 下的函数运行在 `nodejs18.x` |
+| `$schema` | 提供编辑器补全和配置校验 |
 | `rewrites` | 让非 API、非静态资源的路由回退到 `/index.html`，支持 SPA 路由 |
 
 ## 8. 开发规范与注意事项
