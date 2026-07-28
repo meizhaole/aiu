@@ -49,9 +49,11 @@ function Field({ label, required, error, children, hint }) {
   )
 }
 
-function TextArea({ value, onChange, placeholder, rows = 4, maxLength }) {
+function TextArea({ name, value, onChange, placeholder, rows = 4, maxLength }) {
   return (
     <textarea
+      id={name}
+      name={name}
       className="textarea"
       value={value}
       onChange={(event) => onChange(event.target.value)}
@@ -62,9 +64,11 @@ function TextArea({ value, onChange, placeholder, rows = 4, maxLength }) {
   )
 }
 
-function TextInput({ value, onChange, placeholder, type = 'text', inputMode }) {
+function TextInput({ name, value, onChange, placeholder, type = 'text', inputMode }) {
   return (
     <input
+      id={name}
+      name={name}
       className="input"
       type={type}
       inputMode={inputMode}
@@ -238,6 +242,7 @@ export default function App() {
             <div className="grid-2">
               <Field label="姓名" required error={errors.name}>
                 <TextInput
+                  name="name"
                   value={form.name}
                   onChange={(value) => updateField('name', value)}
                   placeholder="请输入姓名"
@@ -246,6 +251,7 @@ export default function App() {
 
               <Field label="学院" required error={errors.college}>
                 <TextInput
+                  name="college"
                   value={form.college}
                   onChange={(value) => updateField('college', value)}
                   placeholder="例如：计算机学院"
@@ -254,6 +260,7 @@ export default function App() {
 
               <Field label="年级 / 专业 / 班级" required error={errors.gradeMajorClass}>
                 <TextInput
+                  name="gradeMajorClass"
                   value={form.gradeMajorClass}
                   onChange={(value) => updateField('gradeMajorClass', value)}
                   placeholder="例如：2024级 软件工程 1班"
@@ -262,6 +269,7 @@ export default function App() {
 
               <Field label="手机号" required error={errors.phone}>
                 <TextInput
+                  name="phone"
                   value={form.phone}
                   onChange={(value) => updateField('phone', value)}
                   placeholder="请输入中国大陆手机号"
@@ -278,6 +286,8 @@ export default function App() {
             <div className="grid-2">
               <Field label="第一志愿部门" required error={errors.firstChoiceDepartment}>
                 <select
+                  id="firstChoiceDepartment"
+                  name="firstChoiceDepartment"
                   className="input select"
                   value={form.firstChoiceDepartment}
                   onChange={(event) => updateField('firstChoiceDepartment', event.target.value)}
@@ -293,6 +303,8 @@ export default function App() {
 
               <Field label="第二志愿部门" hint="可选">
                 <select
+                  id="secondChoiceDepartment"
+                  name="secondChoiceDepartment"
                   className="input select"
                   value={form.secondChoiceDepartment}
                   onChange={(event) => updateField('secondChoiceDepartment', event.target.value)}
@@ -310,6 +322,8 @@ export default function App() {
             <div className="check-group">
               <label className="check-item">
                 <input
+                  id="isOpenToAdjustment"
+                  name="isOpenToAdjustment"
                   type="checkbox"
                   checked={form.isOpenToAdjustment}
                   onChange={(event) => updateField('isOpenToAdjustment', event.target.checked)}
@@ -319,6 +333,8 @@ export default function App() {
 
               <label className="check-item">
                 <input
+                  id="hasTechExperience"
+                  name="hasTechExperience"
                   type="checkbox"
                   checked={form.hasTechExperience}
                   onChange={(event) => {
@@ -341,6 +357,7 @@ export default function App() {
             <div className="stack">
               <Field label="特长 / 爱好" hint="可选">
                 <TextArea
+                  name="hobbiesOrSpecialties"
                   value={form.hobbiesOrSpecialties}
                   onChange={(value) => updateField('hobbiesOrSpecialties', value)}
                   placeholder="例如：摄影、剪辑、吉他、写作等"
@@ -351,6 +368,7 @@ export default function App() {
 
               <Field label="加入原因" hint="可选">
                 <TextArea
+                  name="reasonToJoin"
                   value={form.reasonToJoin}
                   onChange={(value) => updateField('reasonToJoin', value)}
                   placeholder="为什么想加入我们？"
@@ -361,6 +379,7 @@ export default function App() {
 
               <Field label="自我介绍" hint="可选">
                 <TextArea
+                  name="selfIntroduction"
                   value={form.selfIntroduction}
                   onChange={(value) => updateField('selfIntroduction', value)}
                   placeholder="简单介绍一下自己"
@@ -375,6 +394,7 @@ export default function App() {
                 error={errors.techExperienceDetails}
               >
                 <TextArea
+                  name="techExperienceDetails"
                   value={form.techExperienceDetails}
                   onChange={(value) => updateField('techExperienceDetails', value)}
                   placeholder="例如：参加过哪些比赛、项目、训练营，担任什么角色"
