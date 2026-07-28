@@ -1,8 +1,11 @@
 import { Pool } from '@neondatabase/serverless';
 
-const pool = new Pool({
-	connectionString: process.env.DATABASE_URL,
-});
+const databaseUrl = process.env.DATABASE_URL?.trim();
+const pool = databaseUrl
+	? new Pool({
+		connectionString: databaseUrl,
+	})
+	: null;
 
 function sendJson(res, statusCode, payload) {
 	res.status(statusCode).json(payload);
@@ -24,6 +27,14 @@ export default async function handler(req, res) {
 	if (req.method !== 'POST') {
 		res.setHeader('Allow', 'POST');
 		return sendJson(res, 405, { success: false, message: 'Method Not Allowed' });
+	}
+
+	if (!pool) {
+		console.error('register handler error: DATABASE_URL is missing');
+		return sendJson(res, 500, {
+			success: false,
+			message: '数据库连接串未配置，请在 Vercel 环境变量中设置 DATABASE_URL',
+		});
 	}
 
 	const contentType = req.headers['content-type'] || '';

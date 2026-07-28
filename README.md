@@ -278,6 +278,7 @@ HTTP 状态码：`500`
 ### 配置注意事项
 
 - `DATABASE_URL` 必须在 Vercel 环境变量中配置。
+- 如果你在 Vercel 控制台里分别设置了 Development / Preview / Production，请确认当前部署所在的环境里也有 `DATABASE_URL`。
 - 本地开发时也需要在 `.env` 中提供同名变量。
 - `.env` 文件已被 `.gitignore` 忽略，不能提交到仓库。
 
