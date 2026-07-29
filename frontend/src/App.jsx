@@ -101,6 +101,32 @@ function Topbar() {
   )
 }
 
+function BinaryChoice({ label, value, onChange }) {
+  return (
+    <div className="segmented-field">
+      <span className="segmented-label">{label}</span>
+      <div className="segmented" role="group" aria-label={label}>
+        <button
+          type="button"
+          className={`seg-btn ${value ? 'active' : ''}`}
+          aria-pressed={value}
+          onClick={() => onChange(true)}
+        >
+          是
+        </button>
+        <button
+          type="button"
+          className={`seg-btn ${!value ? 'active' : ''}`}
+          aria-pressed={!value}
+          onClick={() => onChange(false)}
+        >
+          否
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
   const [form, setForm] = useState(INITIAL_FORM)
   const [errors, setErrors] = useState({})
@@ -350,35 +376,22 @@ export default function App() {
             </div>
 
             <div className="check-group">
-              <label className="check-item">
-                <input
-                  id="isOpenToAdjustment"
-                  name="isOpenToAdjustment"
-                  autoComplete="off"
-                  type="checkbox"
-                  checked={form.isOpenToAdjustment}
-                  onChange={(event) => updateField('isOpenToAdjustment', event.target.checked)}
-                />
-                <span>是否服从调剂</span>
-              </label>
+              <BinaryChoice
+                label="是否服从调剂"
+                value={form.isOpenToAdjustment}
+                onChange={(value) => updateField('isOpenToAdjustment', value)}
+              />
 
-              <label className="check-item">
-                <input
-                  id="hasTechExperience"
-                  name="hasTechExperience"
-                  autoComplete="off"
-                  type="checkbox"
-                  checked={form.hasTechExperience}
-                  onChange={(event) => {
-                    const checked = event.target.checked
-                    updateField('hasTechExperience', checked)
-                    if (!checked) {
-                      updateField('techExperienceDetails', '')
-                    }
-                  }}
-                />
-                <span>是否有科创经历</span>
-              </label>
+              <BinaryChoice
+                label="是否有科创经历"
+                value={form.hasTechExperience}
+                onChange={(value) => {
+                  updateField('hasTechExperience', value)
+                  if (!value) {
+                    updateField('techExperienceDetails', '')
+                  }
+                }}
+              />
             </div>
 
             <div className="section-title">
@@ -425,7 +438,7 @@ export default function App() {
 
               <Field
                 label="科创经历详情"
-                hint={form.hasTechExperience ? '请填写' : '勾选“是否有科创经历”后填写'}
+                hint={form.hasTechExperience ? '请填写' : '选择“是否有科创经历”为“是”后填写'}
                 error={errors.techExperienceDetails}
               >
                 <TextArea
