@@ -1,24 +1,40 @@
 :root {
-  --ink: #0a0a0a;
-  --bone: #f4f1e8;
-  --paper: #ebe6d2;
-  --paper-deep: #ddd6b8;
-  --highlight: #c8ff00;
-  --highlight-deep: #a3d600;
-  --red: #ff2d20;
-  --blue: #2d4eff;
-  --grid: rgba(10, 10, 10, 0.07);
-  --grid-strong: rgba(10, 10, 10, 0.18);
+  /* —— 深空底色 —— */
+  --void: #03081a;
+  --abyss: #060f2e;
+  --panel: rgba(10, 26, 61, 0.66);
+  --panel-solid: #0a1a3d;
+  --panel-hi: rgba(18, 42, 92, 0.85);
 
-  --f-display: "Archivo Black", "Noto Sans SC", sans-serif;
+  /* —— 蓝白主调 —— */
+  --blue: #3d7eff;
+  --blue-deep: #1b4fd6;
+  --cyan: #5fd4ff;
+  --cyan-bright: #8feaff;
+  --ice: #eaf3ff;
+  --frost: #9fb9e0;
+  --frost-dim: #6b86b3;
+  --white: #ffffff;
+
+  /* —— 信号色 —— */
+  --alert: #ff5d7a;
+  --success: #4dffb0;
+
+  /* —— 网格 / 线 —— */
+  --line: rgba(120, 170, 255, 0.1);
+  --line-strong: rgba(120, 170, 255, 0.28);
+  --glow: rgba(95, 212, 255, 0.55);
+
+  /* —— 字体 —— */
+  --f-display: "Chakra Petch", "Noto Sans SC", sans-serif;
   --f-mono: "JetBrains Mono", "Noto Sans SC", ui-monospace, monospace;
   --f-zh: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
 
-  color-scheme: light;
+  color-scheme: dark;
   font-family: var(--f-mono);
   font-size: 15px;
   line-height: 1.5;
-  color: var(--ink);
+  color: var(--ice);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: geometricPrecision;
@@ -37,19 +53,23 @@ body,
 }
 
 body {
-  background-color: var(--bone);
+  background-color: var(--void);
   background-image:
-    linear-gradient(var(--grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 32px 32px;
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px);
+  background-size: 38px 38px;
   background-position: -1px -1px;
   overflow-x: hidden;
-  animation: grid-drift 24s linear infinite;
-}
-@keyframes grid-drift {
-  to { background-position: -33px -33px, -33px -33px; }
+  animation: grid-drift 28s linear infinite;
 }
 
+@keyframes grid-drift {
+  to {
+    background-position: -39px -39px, -39px -39px;
+  }
+}
+
+/* 深空光晕层 */
 body::before {
   content: "";
   position: fixed;
@@ -57,19 +77,30 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(900px 400px at 90% 0%, rgba(200, 255, 0, 0.08), transparent 70%),
-    radial-gradient(800px 500px at 0% 100%, rgba(45, 78, 255, 0.05), transparent 70%);
+    radial-gradient(1000px 480px at 88% -5%, rgba(61, 126, 255, 0.22), transparent 70%),
+    radial-gradient(900px 560px at -5% 105%, rgba(95, 212, 255, 0.14), transparent 70%),
+    radial-gradient(700px 700px at 50% 50%, rgba(27, 79, 214, 0.08), transparent 75%);
 }
 
+/* 全屏扫描线 */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 999;
-  opacity: 0.5;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(95, 212, 255, 0.025) 0px,
+      rgba(95, 212, 255, 0.025) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    linear-gradient(rgba(95, 212, 255, 0.06) 50%, transparent 50%);
+  background-size: 100% 3px, 100% 6px;
+  opacity: 0.6;
+  mix-blend-mode: screen;
 }
 
 button,
@@ -86,6 +117,22 @@ a {
 }
 
 ::selection {
-  background: var(--highlight);
-  color: var(--ink);
+  background: var(--cyan);
+  color: var(--void);
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--abyss);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(61, 126, 255, 0.4);
+  border: 2px solid var(--abyss);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--blue);
 }

@@ -81,6 +81,26 @@ function TextInput({ name, value, onChange, placeholder, type = 'text', inputMod
   )
 }
 
+function Topbar() {
+  return (
+    <header className="hud-topbar">
+      <div className="hud-left">
+        <span className="hud-dot" />
+        <span>SYS://AIU_RECRUIT_2026 · 终端在线</span>
+      </div>
+      <div className="hud-right">
+        <span>
+          NODE <b>AIU-01</b>
+        </span>
+        <span>
+          VER <b>2.6.0</b>
+        </span>
+        <span>人工智能协会 · 招新通道</span>
+      </div>
+    </header>
+  )
+}
+
 export default function App() {
   const [form, setForm] = useState(INITIAL_FORM)
   const [errors, setErrors] = useState({})
@@ -176,6 +196,7 @@ export default function App() {
   if (submitResult) {
     return (
       <div className="page">
+        <Topbar />
         <main className="shell result-shell">
           <section className="hero-card success-card">
             <p className="eyebrow">提交成功</p>
@@ -204,12 +225,13 @@ export default function App() {
 
   return (
     <div className="page">
+      <Topbar />
       <main className="shell">
         <section className="hero-card">
-          <p className="eyebrow">招新报名表</p>
-          <h1>认真填写，欢迎加入我们</h1>
+          <p className="eyebrow">招新报名 // 2026</p>
+          <h1>加入 AIU，与智能未来同行</h1>
           <p className="hero-copy">
-            请按中文字段逐项填写。带星号的是必填项，提交后会直接发送到后台数据库。
+            人工智能协会 (AIU) 招新通道已开启。请按字段逐项填写，带星号为必填项，提交后将直达后台数据库进入审核流程。
           </p>
           <div className="hero-note">
             请尽量使用真实、可联系的信息；如果你有科创经历，也欢迎在对应栏目里写得更具体一些。
