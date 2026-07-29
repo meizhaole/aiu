@@ -18,6 +18,24 @@ const INITIAL_FORM = {
 
 const DEPARTMENT_OPTIONS = ['组织部', '宣传部', '技术部', '外联部', '文艺部', '其他']
 
+const DEPARTMENT_INFO = {
+  组织部: '统筹日常运营与活动策划',
+  宣传部: '负责视觉设计、推文与品牌传播',
+  技术部: '开展 AI 项目研发与技术分享',
+  外联部: '对接校外资源与合作机会',
+  文艺部: '组织文艺活动与团队氛围',
+  其他: '按需分配至合适岗位',
+}
+
+const TIMELINE = [
+  { phase: '01', title: '在线报名', date: '即日起开放' },
+  { phase: '02', title: '简历初筛', date: '约 T+3 日' },
+  { phase: '03', title: '线下面试', date: '另行通知' },
+  { phase: '04', title: '录取通知', date: '面试后 3 日' },
+]
+
+const REQUIRED_FIELDS = ['name', 'college', 'gradeMajorClass', 'phone', 'firstChoiceDepartment', 'selfIntroduction']
+
 function validate(form) {
   const nextErrors = {}
 
@@ -26,6 +44,7 @@ function validate(form) {
   if (!form.gradeMajorClass.trim()) nextErrors.gradeMajorClass = '请填写年级/专业/班级'
   if (!/^1[3-9]\d{9}$/.test(form.phone.trim())) nextErrors.phone = '请输入正确的中国大陆手机号'
   if (!form.firstChoiceDepartment.trim()) nextErrors.firstChoiceDepartment = '请填写第一志愿部门'
+  if (!form.selfIntroduction.trim()) nextErrors.selfIntroduction = '请填写自我介绍'
   if (form.hasTechExperience && !form.techExperienceDetails.trim()) {
     nextErrors.techExperienceDetails = '请补充科创经历详情'
   }
@@ -34,14 +53,17 @@ function validate(form) {
 }
 
 function Field({ label, required, error, children, hint }) {
+  const isOptional = !required && hint === '可选'
+  const otherHint = hint && hint !== '可选' ? hint : null
   return (
     <label className={`field ${error ? 'has-error' : ''}`}>
       <div className="field-label">
-        <span>
-          {label}
-          {required ? <b className="required">*</b> : null}
+        <span className="label-text">{label}</span>
+        <span className="label-tags">
+          {required ? <span className="badge badge-required">必填</span> : null}
+          {isOptional ? <span className="badge badge-optional">可选</span> : null}
+          {otherHint ? <span className="field-hint">{otherHint}</span> : null}
         </span>
-        {hint ? <span className="field-hint">{hint}</span> : null}
       </div>
       {children}
       {error ? <div className="field-error">{error}</div> : null}
@@ -51,17 +73,24 @@ function Field({ label, required, error, children, hint }) {
 
 function TextArea({ name, value, onChange, placeholder, rows = 4, maxLength, autoComplete = 'off' }) {
   return (
-    <textarea
-      id={name}
-      name={name}
-      autoComplete={autoComplete}
-      className="textarea"
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      placeholder={placeholder}
-      rows={rows}
-      maxLength={maxLength}
-    />
+    <div className="textarea-wrap">
+      <textarea
+        id={name}
+        name={name}
+        autoComplete={autoComplete}
+        className="textarea"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        rows={rows}
+        maxLength={maxLength}
+      />
+      {maxLength ? (
+        <span className={`char-count ${value.length >= maxLength ? 'is-full' : ''}`}>
+          {value.length} / {maxLength}
+        </span>
+      ) : null}
+    </div>
   )
 }
 
@@ -134,21 +163,16 @@ export default function App() {
   const [submitResult, setSubmitResult] = useState(null)
   const [submitError, setSubmitError] = useState('')
 
-  const filledCount = useMemo(() => {
-    return [
-      form.name,
-      form.college,
-      form.gradeMajorClass,
-      form.phone,
-      form.firstChoiceDepartment,
-      form.secondChoiceDepartment,
-      form.hobbiesOrSpecialties,
-      form.reasonToJoin,
-      form.selfIntroduction,
-      form.techExperienceDetails,
-      form.isOpenToAdjustment,
-      form.hasTechExperience,
-    ].filter(Boolean).length
+  const { requiredDone, requiredTotal, progressPct } = useMemo(() => {
+    const extra = form.hasTechExperience ? 1 : 0
+    const total = REQUIRED_FIELDS.length + extra
+    let done = REQUIRED_FIELDS.filter((key) => form[key].trim()).length
+    if (form.hasTechExperience && form.techExperienceDetails.trim()) done += 1
+    return {
+      requiredDone: done,
+      requiredTotal: total,
+      progressPct: total === 0 ? 0 : Math.round((done / total) * 100),
+    }
   }, [form])
 
   const updateField = (key, value) => {
@@ -257,32 +281,70 @@ export default function App() {
           <p className="eyebrow">招新报名 // 2026</p>
           <h1>加入 AIU，与智能未来同行</h1>
           <p className="hero-copy">
-            人工智能协会 (AIU) 招新通道已开启。请按字段逐项填写，带星号为必填项，提交后将直达后台数据库进入审核流程。
+            人工智能协会 (AIU) 招新通道已开启。请按字段逐项填写，带「必填」标记为必填项，提交后将直达后台数据库进入审核流程。
           </p>
-          <div className="hero-note">
-            请尽量使用真实、可联系的信息；如果你有科创经历，也欢迎在对应栏目里写得更具体一些。
+
+          <div className="hero-progress">
+            <div className="progress-head">
+              <span>必填完成度</span>
+              <strong>
+                {requiredDone} / {requiredTotal}
+              </strong>
+            </div>
+            <div className="progress-track">
+              <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+            </div>
           </div>
-          <div className="hero-stats">
-            <div>
-              <span>当前进度</span>
-              <strong>{filledCount}</strong>
+
+          <div className="hero-block">
+            <p className="hero-mini-title">招新部门</p>
+            <div className="dept-chips">
+              {DEPARTMENT_OPTIONS.map((option) => (
+                <span className="dept-chip" key={option}>
+                  {option}
+                </span>
+              ))}
             </div>
-            <div>
-              <span>必填字段</span>
-              <strong>已启用</strong>
-            </div>
-            <div>
-              <span>提交方式</span>
-              <strong>/api/register</strong>
-            </div>
+          </div>
+
+          <div className="hero-block">
+            <p className="hero-mini-title">招新流程</p>
+            <ol className="timeline">
+              {TIMELINE.map((item) => (
+                <li key={item.phase}>
+                  <span className="tl-phase">{item.phase}</span>
+                  <span className="tl-body">
+                    <b>{item.title}</b>
+                    <i>{item.date}</i>
+                  </span>
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
 
         <section className="form-card">
           <form className="form" onSubmit={handleSubmit} noValidate>
             <div className="form-banner">
-              本页为正式报名表，请确认信息准确后再提交。标记为“可选”的内容可按需填写。
+              本页为正式报名表，请确认信息准确后再提交。标记「可选」的内容可按需填写。
             </div>
+
+            <div className="section-title">
+              <h2>自我介绍</h2>
+              <p>先用一段话让我们认识你，这是面试官的第一印象。</p>
+            </div>
+
+            <Field label="自我介绍" required error={errors.selfIntroduction}>
+              <TextArea
+                name="selfIntroduction"
+                autoComplete="off"
+                value={form.selfIntroduction}
+                onChange={(value) => updateField('selfIntroduction', value)}
+                placeholder="例如：你的性格、为什么对人工智能感兴趣、希望在这里收获什么"
+                rows={5}
+                maxLength={500}
+              />
+            </Field>
 
             <div className="section-title">
               <h2>基本信息</h2>
@@ -335,6 +397,15 @@ export default function App() {
             <div className="section-title">
               <h2>部门志愿</h2>
               <p>请根据你的意向选择第一志愿，第二志愿可选。</p>
+            </div>
+
+            <div className="dept-info">
+              {DEPARTMENT_OPTIONS.map((option) => (
+                <div className="dept-info-item" key={option}>
+                  <span className="dept-info-name">{option}</span>
+                  <span className="dept-info-desc">{DEPARTMENT_INFO[option]}</span>
+                </div>
+              ))}
             </div>
 
             <div className="grid-2">
@@ -396,7 +467,7 @@ export default function App() {
 
             <div className="section-title">
               <h2>个人补充</h2>
-              <p>这些内容将帮助我们更全面地了解你。</p>
+              <p>这些内容将帮助我们更全面地了解你，均为可选。</p>
             </div>
 
             <div className="stack">
@@ -419,18 +490,6 @@ export default function App() {
                   value={form.reasonToJoin}
                   onChange={(value) => updateField('reasonToJoin', value)}
                   placeholder="为什么想加入我们？"
-                  rows={4}
-                  maxLength={500}
-                />
-              </Field>
-
-              <Field label="自我介绍" hint="可选">
-                <TextArea
-                  name="selfIntroduction"
-                  autoComplete="off"
-                  value={form.selfIntroduction}
-                  onChange={(value) => updateField('selfIntroduction', value)}
-                  placeholder="简单介绍一下自己"
                   rows={4}
                   maxLength={500}
                 />
