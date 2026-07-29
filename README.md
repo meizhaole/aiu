@@ -14,7 +14,8 @@ AIU 报名网站
 
 ### 主要功能
 
-- 前端展示中文报名表单
+- 前端展示中文报名表单（科幻蓝白 HUD 风格）
+- 字段本地校验（必填、手机号格式）与「必填完成度」实时进度
 - 提交报名信息到后端 API
 - 后端校验后写入 `registrations` 表
 - 成功后返回报名编号和提交时间
@@ -73,7 +74,7 @@ AIU 报名网站
 
 #### `frontend/`
 
-存放前端应用源码。当前页面为中文报名表，提交时会直接调用 `/api/register`。
+存放前端应用源码。当前页面为科幻蓝白 HUD 风格的中文报名表，提交时调用 `/api/register`。部门选项为：创智部、运营部、宣传部、外联部。前端接口对接细节见 [`frontend/README.md`](frontend/README.md)。
 
 #### 根目录
 
@@ -143,33 +144,35 @@ CREATE TABLE registrations (
 
 ### 请求体字段映射
 
-当前前端提交的 JSON 字段与数据库列映射如下：
+前端提交的 JSON 字段经后端 `api/register.js` 处理后写入数据库。注意：**部分字段的「请求字段名」与「数据库列名」并不相同**，后端在 handler 中做了重命名。
 
-| 前端字段 | 数据库列 | 说明 |
+| 请求字段（前端发送） | 数据库列 | 说明 |
 | --- | --- | --- |
 | `name` | `name` | 姓名 |
 | `college` | `college` | 学院 |
-| `gradeMajorClass` | `grade_major_class` | 年级 / 专业 / 班级 |
+| `gradeMajorClass` | `grade_major_class` | 年级 / 专业 / 班级；后端兜底读取 `class` |
 | `phone` | `phone` | 手机号 |
 | `firstChoiceDepartment` | `first_choice_department` | 第一志愿部门 |
-| `secondChoiceDepartment` | `second_choice_department` | 第二志愿部门，可为空 |
-| `isOpenToAdjustment` | `is_open_to_adjustment` | 是否服从调剂 |
-| `hobbiesOrSpecialties` | `hobbies_or_specialties` | 特长 / 爱好，可为空 |
-| `reasonToJoin` | `reason_to_join` | 加入原因，可为空 |
+| `secondChoiceDepartment` | `second_choice_department` | 第二志愿部门，为空存 `null` |
+| `isOpenToAdjustment` | `is_open_to_adjustment` | 是否服从调剂，`Boolean(...)` 转换 |
+| `skills` | `hobbies_or_specialties` | 特长 / 爱好，可为空 |
+| `motivation` | `reason_to_join` | 加入原因，可为空 |
 | `selfIntro` | `self_introduction` | 自我介绍，可为空 |
 | `experience` | `tech_experience_details` | 科创经历详情 |
-| `hasTechExperience` | `has_tech_experience` | 前端当前会提交该字段，但后端以 `experience` 是否为空决定该值 |
+| `hasTechExperience` | `has_tech_experience` | 前端会提交，但后端不读取，由 `experience` 是否为空决定 |
+
+> ⚠️ 易错点：前端语义上的「特长 / 爱好」「加入原因」，对应的请求字段名分别是 `skills`、`motivation`，与前端表单 state（`hobbiesOrSpecialties`、`reasonToJoin`）以及数据库列名都不同。前端在 `handleSubmit` 中已完成映射，对接时务必使用 `skills` / `motivation`，否则数据会被后端丢弃。
 
 ### 重要实现说明
 
-当前后端代码中，`has_tech_experience` 并不是直接信任请求体中的 `hasTechExperience` 值，而是根据 `experience` 是否有内容自动计算：
+后端 `has_tech_experience` 并不信任请求体中的 `hasTechExperience`，而是根据 `experience` 是否有内容自动计算：
 
 ```js
 const experience = getTrimmedString(body.experience);
 const hasTechExperience = experience.length > 0;
 ```
 
-因此，前端提交时只要保证 `experience` 字段正确传递即可。
+因此前端只需保证 `experience` 正确传递即可。完整的前端对接说明（含 TS 类型、调用封装、字段名映射对照）见 [`frontend/README.md`](frontend/README.md)。
 
 ### 校验规则
 
@@ -190,12 +193,12 @@ const hasTechExperience = experience.length > 0;
 	"name": "张三",
 	"college": "计算机学院",
 	"gradeMajorClass": "2024级 软件工程 1班",
-	"phone": "13800000000",
-	"firstChoiceDepartment": "技术部",
-	"secondChoiceDepartment": "宣传部",
+	"phone": "13800138000",
+	"firstChoiceDepartment": "创智部",
+	"secondChoiceDepartment": "运营部",
 	"isOpenToAdjustment": true,
-	"hobbiesOrSpecialties": "摄影、前端开发",
-	"reasonToJoin": "希望参与团队协作并提升能力",
+	"skills": "摄影、前端开发",
+	"motivation": "希望参与团队协作并提升能力",
 	"selfIntro": "我性格开朗，善于沟通",
 	"hasTechExperience": true,
 	"experience": "参加过校级前端项目与比赛"
