@@ -380,7 +380,7 @@ export const CONTACT_INFO = {
   
   location: '实验室地址：工程南楼 306 & 308',
   officeHours: '值班时间：周一至周五 19:00 - 21:30',
-  socialNote: '微信公众号：SCAU人工智能',
+  socialNote: '微信公众号：人工智能AIU',
   description:
     '无论你想咨询招新、旁听分享、参观实验室，还是希望发起合作，都可以通过下面的方式和我们取得联系。',
 }
