@@ -16,15 +16,13 @@ const INITIAL_FORM = {
   techExperienceDetails: '',
 }
 
-const DEPARTMENT_OPTIONS = ['组织部', '宣传部', '技术部', '外联部', '文艺部', '其他']
+const DEPARTMENT_OPTIONS = ['创智部', '运营部', '宣传部', '外联部']
 
 const DEPARTMENT_INFO = {
-  组织部: '统筹日常运营与活动策划',
-  宣传部: '负责视觉设计、推文与品牌传播',
-  技术部: '开展 AI 项目研发与技术分享',
-  外联部: '对接校外资源与合作机会',
-  文艺部: '组织文艺活动与团队氛围',
-  其他: '按需分配至合适岗位',
+  创智部: '技术支撑赛事，组织培训营造竞赛氛围',
+  运营部: '统筹财务、赛事、实验室及证明办理',
+  宣传部: '运营公众号，推送资讯与协会动态',
+  外联部: '统筹活动、项目及成员管理',
 }
 
 const TIMELINE = [
@@ -330,23 +328,6 @@ export default function App() {
             </div>
 
             <div className="section-title">
-              <h2>自我介绍</h2>
-              <p>先用一段话让我们认识你，这是面试官的第一印象。</p>
-            </div>
-
-            <Field label="自我介绍" required error={errors.selfIntroduction}>
-              <TextArea
-                name="selfIntroduction"
-                autoComplete="off"
-                value={form.selfIntroduction}
-                onChange={(value) => updateField('selfIntroduction', value)}
-                placeholder="例如：你的性格、为什么对人工智能感兴趣、希望在这里收获什么"
-                rows={5}
-                maxLength={500}
-              />
-            </Field>
-
-            <div className="section-title">
               <h2>基本信息</h2>
               <p>用于识别报名者身份与后续联系。</p>
             </div>
@@ -467,10 +448,22 @@ export default function App() {
 
             <div className="section-title">
               <h2>个人补充</h2>
-              <p>这些内容将帮助我们更全面地了解你，均为可选。</p>
+              <p>这些内容将帮助我们更全面地了解你。</p>
             </div>
 
             <div className="stack">
+              <Field label="自我介绍" required error={errors.selfIntroduction}>
+                <TextArea
+                  name="selfIntroduction"
+                  autoComplete="off"
+                  value={form.selfIntroduction}
+                  onChange={(value) => updateField('selfIntroduction', value)}
+                  placeholder="例如：你的性格、为什么对人工智能感兴趣、希望在这里收获什么"
+                  rows={5}
+                  maxLength={500}
+                />
+              </Field>
+
               <Field label="特长 / 爱好" hint="可选">
                 <TextArea
                   name="hobbiesOrSpecialties"
