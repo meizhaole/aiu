@@ -150,44 +150,7 @@ Content-Type: application/json
 
 ---
 
-## 四、⚠️ 前端当前实现的对接差异（需修复）
-
-> 阅读源码发现：前端 `App.jsx` 当前发送的 payload 字段名与后端实际读取的字段名**不一致**，会导致部分数据被后端静默丢弃。请在对接时修正。
-
-| 前端 `App.jsx` 当前发送 | 后端 `register.js` 实际读取 | 影响 |
-|---|---|---|
-| `hobbiesOrSpecialties` | `skills` | 🔴 **特长/爱好被丢弃**，入库为空 |
-| `reasonToJoin` | `motivation` | 🔴 **加入原因被丢弃**，入库为空 |
-| `hasTechExperience` | （不读取） | 🟡 无害，但被忽略；后端由 `experience` 推断 |
-
-### 修复建议
-
-在 `App.jsx` 的 `handleSubmit` 中，将 payload 字段名改为后端期望值：
-
-```diff
-  const payload = {
-    name: form.name.trim(),
-    college: form.college.trim(),
-    gradeMajorClass: form.gradeMajorClass.trim(),
-    phone: form.phone.trim(),
-    firstChoiceDepartment: form.firstChoiceDepartment.trim(),
-    secondChoiceDepartment: form.secondChoiceDepartment.trim(),
-    isOpenToAdjustment: form.isOpenToAdjustment,
--   hobbiesOrSpecialties: form.hobbiesOrSpecialties.trim(),
--   reasonToJoin: form.reasonToJoin.trim(),
-+   skills: form.hobbiesOrSpecialties.trim(),
-+   motivation: form.reasonToJoin.trim(),
-    selfIntro: form.selfIntroduction.trim(),
-    hasTechExperience: form.hasTechExperience,
-    experience: form.hasTechExperience ? form.techExperienceDetails.trim() : '',
-  }
-```
-
-> 此外，前端已把「自我介绍」改为**必填**并在本地校验，但后端 `selfIntro` 仍为可选——前端强约束、后端弱约束，二者不冲突，保持现状即可。
-
----
-
-## 五、字段名映射对照（重要）
+## 四、字段名映射对照（重要）
 
 为避免混淆，三者命名对照如下：
 
@@ -208,7 +171,7 @@ Content-Type: application/json
 
 ---
 
-## 六、TypeScript 类型定义（可直接复用）
+## 五、TypeScript 类型定义（可直接复用）
 
 为方便队友在调用时获得类型提示，提供以下类型（即使项目当前为 JS，也可在 JSDoc 中引用）：
 
@@ -249,7 +212,7 @@ export type RegisterResponse = RegisterSuccessResponse | RegisterErrorResponse
 
 ---
 
-## 七、前端调用封装示例
+## 六、前端调用封装示例
 
 建议封装一个统一的提交函数，集中处理字段名映射与错误：
 
@@ -285,7 +248,7 @@ async function submitRegistration(form) {
 
 ---
 
-## 八、本地联调说明
+## 七、本地联调说明
 
 `/api/*` 由 Vercel Serverless 托管，本地 `vite dev` 默认**不会**运行后端。两种联调方式：
 
@@ -312,7 +275,7 @@ async function submitRegistration(form) {
 
 ---
 
-## 九、部门字典
+## 八、部门字典
 
 前端部门选项与后端无强校验（后端仅检查非空），但为保证数据一致性，统一使用以下 4 个部门：
 
@@ -325,7 +288,7 @@ async function submitRegistration(form) {
 
 ---
 
-## 十、注意事项
+## 九、注意事项
 
 - 后端对 `gradeMajorClass` 有 `class` 字段兜底，前端**无需**额外传 `class`，保持 `gradeMajorClass` 即可。
 - `phone` 必须为 11 位中国大陆手机号，前端已用相同正则做本地校验，体验更佳。
