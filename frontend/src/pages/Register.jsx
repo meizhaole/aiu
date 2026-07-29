@@ -1,5 +1,6 @@
+import { Link } from 'react-router-dom'
 import { useMemo, useState } from 'react'
-import { DEPARTMENT_OPTIONS, DEPARTMENTS, TIMELINE } from '../data'
+import { DEPARTMENT_OPTIONS, DEPARTMENTS, PROCESS_STEPS } from '../data'
 
 const INITIAL_FORM = {
   name: '',
@@ -120,7 +121,7 @@ function BinaryChoice({ label, value, onChange }) {
   )
 }
 
-export default function Register({ onNavigate }) {
+export default function Register() {
   const [form, setForm] = useState(INITIAL_FORM)
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -227,9 +228,9 @@ export default function Register({ onNavigate }) {
             </div>
           </div>
           <div className="actions">
-            <button type="button" className="secondary-btn" onClick={() => onNavigate('home')}>
+            <Link className="secondary-btn" to="/">
               返回首页
-            </button>
+            </Link>
             <button type="button" className="primary-btn" onClick={handleReset}>
               继续填写下一份
             </button>
@@ -242,9 +243,9 @@ export default function Register({ onNavigate }) {
   return (
     <main className="shell">
       <section className="hero-card">
-        <button type="button" className="back-link" onClick={() => onNavigate('home')}>
+        <Link className="back-link" to="/">
           ← 返回首页
-        </button>
+        </Link>
         <p className="eyebrow">招新报名 // 2026</p>
         <h1>加入 AIU，与智能未来同行</h1>
         <p className="hero-copy">
@@ -277,7 +278,7 @@ export default function Register({ onNavigate }) {
         <div className="hero-block">
           <p className="hero-mini-title">招新流程</p>
           <ol className="timeline">
-            {TIMELINE.map((item) => (
+            {PROCESS_STEPS.map((item) => (
               <li key={item.phase}>
                 <span className="tl-phase">{item.phase}</span>
                 <span className="tl-body">
