@@ -1716,17 +1716,32 @@
 }
 
 .team-carousel-media {
-  min-height: 320px;
+  position: relative;
+  height: clamp(320px, 34vw, 420px);
   border: 1px solid rgba(95, 212, 255, 0.16);
   border-radius: 4px;
   overflow: hidden;
   background: rgba(3, 8, 26, 0.6);
 }
 
-.team-carousel-media img {
+.team-carousel-image {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.team-carousel-image-visible {
+  opacity: 1;
+}
+
+.team-carousel-image-enter {
+  animation: team-carousel-fade-in 800ms ease both;
+}
+
+.team-carousel-image-exit {
+  animation: team-carousel-fade-out 800ms ease both;
 }
 
 .team-carousel-content {
@@ -1745,6 +1760,13 @@
   font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--cyan-bright);
+}
+
+.team-carousel-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: team-carousel-copy-in 520ms ease both;
 }
 
 .team-carousel-content h3 {
@@ -1781,6 +1803,42 @@
 .team-carousel-dot.is-active {
   background: var(--cyan);
   box-shadow: 0 0 12px rgba(95, 212, 255, 0.55);
+}
+
+@keyframes team-carousel-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(1.015);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes team-carousel-fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.99);
+  }
+}
+
+@keyframes team-carousel-copy-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .honor-list {
@@ -1916,5 +1974,9 @@
 
   .honor-item {
     grid-template-columns: 1fr;
+  }
+
+  .team-carousel-media {
+    height: clamp(240px, 62vw, 320px);
   }
 }
